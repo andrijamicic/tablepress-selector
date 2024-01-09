@@ -1,2 +1,166 @@
 <p id="selectTriggerFilter"> </p>
 [table id=1 /]
+
+
+<style>
+.spiner{
+  background-image: url(https://koksenergy.rs/wp-content/uploads/2021/02/loading7.gif);
+  background-color: #FFFFFF;
+  background-position: 50% 100px !important;
+  background-size: 30px 30px !important;
+}
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    text-align: left;
+}
+.dataTables_filter button {
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+@media only screen and (max-width: 600px) {
+.filter {
+    float: left;
+    width: 77vw !important;
+}
+#tablepress-1_filter input {
+    width: 68vw;
+    margin-left: 0;
+}
+#tablepress-1_filter button {
+    width: 9vw;
+}
+}
+.filter {
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: 5px;
+    background-color: transparent;
+    margin-bottom: 10px;
+    width: 277px;
+}
+.tablepress .sorting:hover, .tablepress .sorting_asc:hover, .tablepress .sorting_desc:hover {
+    background-color: rgba(76,95,177,0.71);
+  color:white;
+}
+.tablepress .sorting_asc,.tablepress .sorting_desc, .tablepress tfoot th, .tablepress thead th {
+    background-color: rgba(76, 95, 177, 0.12);
+}
+table.dataTable thead th, table.dataTable thead td, table.dataTable.no-footer {
+    border-bottom: 3px solid #bec2d8 !important;
+}
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none;
+    float: left;
+    min-width: 160px;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #fff;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+    .dropdown-menu > li > a {
+    display: block;
+    padding: 3px 10px;
+    clear: both;
+    font-weight: 400;
+    line-height: 1.42857143;
+    color: #333;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.dropdown-menu > .active > a, .dropdown-menu > .active > a:focus, .dropdown-menu > .active > a:hover {
+    color: #fff;
+    text-decoration: none;
+    background-color: #337ab7;
+    outline: 0;
+}
+.dropdown-menu > li {
+    list-style-type: none;
+}
+.typeahead.dropdown-menu {
+    padding: 0;
+}
+</style>
+
+<script>
+  jQuery(document).ready(function() {
+   var dataSrc = [];
+   var oldStart = 0;
+   var table = jQuery('#tablepress-1').DataTable({
+     "orderClasses": false,
+      drawCallback: function (o) {
+          var newStart = this.api().page.info().start;
+      
+          if ( newStart != oldStart ) {
+                var targetOffset = jQuery('#naslov').offset().top;
+                jQuery('html,body').animate({scrollTop: targetOffset}, 500);
+                oldStart = newStart;
+          }
+      },
+        "language": {
+        "lengthMenu": "Prikaži _MENU_ prodavnica po strani",
+        "zeroRecords": "Žao nam je - ništa nije pronađeno",
+        "info": "Prikazuje se _PAGE_ od _PAGES_",
+        "infoEmpty": "Nema zapisa",
+        "infoFiltered": "(filtrirano od ukupno _MAX_ prodavnica)",
+        "search": "",
+        "paginate": {
+        "first": "Početna",
+        "last": "Poslednja",
+        "next": "Sledeća",
+        "previous": "Prethodna"
+        },
+      },
+      initComplete: function(){
+      var column = this.api().column(3);
+      var select = jQuery('<select class="filter"><option value="">Svi gradovi</option></select>')
+        .appendTo('#selectTriggerFilter')
+        .on('change', function() {
+          var val = jQuery(this).val();
+          column.search(val ? '^' + jQuery(this).val() + '$' : val, true, false).draw();
+        });
+      column.data().unique().sort().each(function(d, j) {
+      select.append('<option value="' + d + '">' + d + '</option>');
+      });
+      var api = this.api();
+
+         // Populate a dataset for autocomplete functionality
+         // using data from first, second and third columns
+      api.cells('tr', [0, 1, 2]).every(function(){
+            // Get cell data as plain text
+         var data = jQuery('<div>').html(this.data()).text();           
+         if(dataSrc.indexOf(data) === -1){ dataSrc.push(data); }
+      });  
+      // Initialize Typeahead plug-in
+      jQuery('.dataTables_filter input[type="search"]', api.table().container())
+      .attr('placeholder','Pretraga')
+      .after('<button type="button" title="Očisti pretragu">×</button>')
+      .typeahead({
+              source: dataSrc,
+              afterSelect: function(value){
+                  api.search(value).draw();
+              }
+       });
+      jQuery('#tablepress-1_wrapper button').click(function() {
+         jQuery('#tablepress-1_filter input').val('');
+         console.log('table clicked');
+         table.search('').columns().search('').draw();
+         jQuery('select option:selected').removeAttr('selected');
+      });
+      }
+   });
+    jQuery("#lokacije").removeClass("spiner");
+});
+</script>
